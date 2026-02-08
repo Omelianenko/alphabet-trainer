@@ -60,9 +60,10 @@ function getLetterStats(letter) {
   if (!stats[letter]) {
     stats[letter] = { shown: 0, correct: 0, wrong: 0, totalTime: 0, timedCorrect: 0 };
   }
-  // Migrate old stats missing time fields
   const s = stats[letter];
+  // Migrate old stats
   if (s.totalTime === undefined) { s.totalTime = 0; s.timedCorrect = 0; }
+  if (!s.confusions) { s.confusions = {}; }
   return s;
 }
 
@@ -123,16 +124,40 @@ function pickQuestion() {
 }
 
 // --- Generate wrong answers ---
-function generateOptions(correctIndex) {
+function generateOptions(correctIndex, shownIndex) {
   const correctLetter = ALPHABET[correctIndex];
-  const wrongPool = ALPHABET.filter((_, i) => i !== correctIndex);
+  const shownLetter = ALPHABET[shownIndex];
 
-  // Shuffle and pick 3
-  for (let i = wrongPool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [wrongPool[i], wrongPool[j]] = [wrongPool[j], wrongPool[i]];
+  // Exclude correct answer AND the shown letter from wrong pool
+  const wrongPool = ALPHABET.filter(l => l !== correctLetter && l !== shownLetter);
+
+  // Get confusion data: letters the user has mistakenly picked for this question
+  const s = getLetterStats(shownLetter);
+  const confusions = s.confusions || {};
+
+  // Sort wrong pool: most-confused letters first
+  const confusedLetters = Object.entries(confusions)
+    .filter(([l]) => wrongPool.includes(l))
+    .sort((a, b) => b[1] - a[1])
+    .map(([l]) => l);
+
+  // Pick up to 3: prioritize confused letters, fill rest randomly
+  const wrong = [];
+  for (const l of confusedLetters) {
+    if (wrong.length >= 3) break;
+    wrong.push(l);
   }
-  const wrong = wrongPool.slice(0, 3);
+
+  // Fill remaining slots with random letters from pool
+  const remaining = wrongPool.filter(l => !wrong.includes(l));
+  for (let i = remaining.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+  }
+  for (const l of remaining) {
+    if (wrong.length >= 3) break;
+    wrong.push(l);
+  }
 
   // Combine and shuffle
   const options = [correctLetter, ...wrong];
@@ -278,7 +303,7 @@ function showQuestion() {
   currentLetterEl.textContent = ALPHABET[qi];
   currentLetterEl.className = 'big-letter';
 
-  const options = generateOptions(correctIndex);
+  const options = generateOptions(correctIndex, qi);
   optionsEl.innerHTML = '';
 
   for (const opt of options) {
@@ -317,6 +342,8 @@ function handleAnswer(answer, clickedBtn) {
     incrementStreak();
   } else {
     s.wrong++;
+    const wrongAnswer = answer.toUpperCase();
+    s.confusions[wrongAnswer] = (s.confusions[wrongAnswer] || 0) + 1;
     sessionWrong++;
     resetStreak();
   }
