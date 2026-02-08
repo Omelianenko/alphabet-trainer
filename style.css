@@ -300,6 +300,43 @@ nav {
   to { width: 0%; background: var(--wrong); }
 }
 
+/* --- Timer settings --- */
+.timer-settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.timer-settings-label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-right: 4px;
+}
+
+.timer-opt {
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  color: var(--text-dim);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.timer-opt.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.timer-opt:hover:not(.active) {
+  background: var(--surface2);
+  color: var(--text);
+}
+
 /* --- Streak --- */
 .streak-display {
   display: flex;

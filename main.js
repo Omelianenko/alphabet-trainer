@@ -18,7 +18,7 @@ let recentQuestions = []; // track last 2 questions to avoid repeats
 let streak = 0;
 let recordStreak = parseInt(localStorage.getItem('alphabet-record-streak') || '0', 10);
 let countdownTimer = null;
-const TIMER_DURATION = 3000;
+let timerDuration = parseInt(localStorage.getItem('alphabet-timer') || '3000', 10);
 
 // --- DOM refs ---
 const currentLetterEl = document.getElementById('current-letter');
@@ -165,6 +165,20 @@ toggleModeBtn.addEventListener('click', () => {
   if (!answered) startTimer();
 });
 
+// --- Timer settings ---
+const timerOpts = document.querySelectorAll('.timer-opt');
+// Set active button from saved value on load
+for (const btn of timerOpts) {
+  btn.classList.toggle('active', parseInt(btn.dataset.time, 10) === timerDuration);
+  btn.addEventListener('click', () => {
+    timerDuration = parseInt(btn.dataset.time, 10);
+    localStorage.setItem('alphabet-timer', String(timerDuration));
+    for (const b of timerOpts) b.classList.remove('active');
+    btn.classList.add('active');
+    if (!answered) startTimer();
+  });
+}
+
 // --- Streak ---
 function updateStreakDisplay() {
   streakCountEl.textContent = streak;
@@ -197,17 +211,17 @@ function stopTimer() {
 
 function startTimer() {
   stopTimer();
-  if (!showOptions) return;
+  if (!showOptions || timerDuration === 0) return;
 
   timerBarContainer.classList.remove('hidden');
   // Trigger reflow so animation restarts
   void timerBar.offsetWidth;
-  timerBar.style.animation = `timer-shrink ${TIMER_DURATION}ms linear forwards`;
+  timerBar.style.animation = `timer-shrink ${timerDuration}ms linear forwards`;
 
   countdownTimer = setTimeout(() => {
     countdownTimer = null;
     handleTimeout();
-  }, TIMER_DURATION);
+  }, timerDuration);
 }
 
 function handleTimeout() {
