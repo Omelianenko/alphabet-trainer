@@ -12,7 +12,7 @@ let currentQuestion = null; // { letterIndex, correctAnswer }
 let answered = false;
 let sessionCorrect = 0;
 let sessionWrong = 0;
-let showOptions = localStorage.getItem('alphabet-mode') === 'options';
+let showOptions = localStorage.getItem('alphabet-mode') !== 'input';
 let questionStartTime = 0;
 let streak = 0;
 let recordStreak = parseInt(localStorage.getItem('alphabet-record-streak') || '0', 10);
@@ -138,9 +138,11 @@ function generateOptions(correctIndex) {
 function applyMode() {
   if (showOptions) {
     optionsEl.classList.remove('hidden');
-    toggleModeBtn.textContent = 'Сховати варіанти';
+    inputArea.classList.add('hidden');
+    toggleModeBtn.textContent = 'Ввести літеру';
   } else {
     optionsEl.classList.add('hidden');
+    inputArea.classList.remove('hidden');
     toggleModeBtn.textContent = 'Показати варіанти';
   }
 }
@@ -300,9 +302,14 @@ function handleAnswer(answer, clickedBtn) {
   sessionCorrectEl.textContent = sessionCorrect;
   sessionWrongEl.textContent = sessionWrong;
 
-  // Correct → skip straight to next question
+  // Correct → flash green, then next question
   if (isCorrect) {
-    showQuestion();
+    currentLetterEl.textContent = correct;
+    currentLetterEl.classList.add('flash-correct');
+    setTimeout(() => {
+      currentLetterEl.classList.remove('flash-correct');
+      showQuestion();
+    }, 400);
     return;
   }
 
