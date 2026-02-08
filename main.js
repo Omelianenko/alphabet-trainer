@@ -14,6 +14,7 @@ let sessionCorrect = 0;
 let sessionWrong = 0;
 let showOptions = localStorage.getItem('alphabet-mode') !== 'input';
 let questionStartTime = 0;
+let recentQuestions = []; // track last 2 questions to avoid repeats
 let streak = 0;
 let recordStreak = parseInt(localStorage.getItem('alphabet-record-streak') || '0', 10);
 let countdownTimer = null;
@@ -97,19 +98,28 @@ function pickQuestion() {
     candidates.push({ index: i, priority });
   }
 
+  // Filter out recently asked letters (gap of at least 2)
+  const filtered = candidates.filter(c => !recentQuestions.includes(c.index));
+  const pool = filtered.length > 0 ? filtered : candidates;
+
   // Weighted random selection based on priority
-  const totalWeight = candidates.reduce((sum, c) => sum + c.priority, 0);
+  const totalWeight = pool.reduce((sum, c) => sum + c.priority, 0);
   let rand = Math.random() * totalWeight;
 
-  for (const c of candidates) {
+  for (const c of pool) {
     rand -= c.priority;
     if (rand <= 0) {
+      recentQuestions.push(c.index);
+      if (recentQuestions.length > 2) recentQuestions.shift();
       return c.index;
     }
   }
 
   // Fallback
-  return candidates[candidates.length - 1].index;
+  const last = pool[pool.length - 1].index;
+  recentQuestions.push(last);
+  if (recentQuestions.length > 2) recentQuestions.shift();
+  return last;
 }
 
 // --- Generate wrong answers ---
