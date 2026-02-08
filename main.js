@@ -336,8 +336,11 @@ function handleAnswer(answer, clickedBtn) {
   s.shown++;
   if (isCorrect) {
     s.correct++;
-    s.totalTime += reactionMs;
-    s.timedCorrect++;
+    // Only record time if under 10s (longer = user was distracted)
+    if (reactionMs <= 10000) {
+      s.totalTime += reactionMs;
+      s.timedCorrect++;
+    }
     sessionCorrect++;
     incrementStreak();
   } else {
